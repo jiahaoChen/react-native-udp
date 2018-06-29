@@ -250,6 +250,14 @@ UdpSocket.prototype.setBroadcast = function(flag) {
   });
 }
 
+UdpSocket.prototype.getBroadcast = function(callback) {
+  var self = this
+  Sockets.getBroadcast(this._id, (ip) => {
+    console.log("get broadcast ip", ip)
+    callback(ip)
+  });
+}
+
 UdpSocket.prototype.setTTL = function(ttl) {
   // nothing yet
 }

@@ -11,6 +11,10 @@ import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.support.annotation.Nullable;
 import android.util.SparseArray;
+import android.net.DhcpInfo;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+
 
 import com.facebook.common.logging.FLog;
 import com.facebook.react.bridge.Arguments;
@@ -28,6 +32,14 @@ import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.concurrent.ExecutionException;
+import java.net.InterfaceAddress;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.Formatter;
+
 
 /**
  * The NativeModule in charge of storing active {@link UdpSocketClient}s, and acting as an api layer.
@@ -310,6 +322,40 @@ public final class UdpSockets extends ReactContextBaseJavaModule
                 }
             }
         }.execute();
+    }
+
+    @ReactMethod
+    public void getBroadcast(final Integer cId, final Callback callback) {
+   
+        String ipAddress = null;
+        for (InterfaceAddress address : getInetAddresses()) {
+            if (!address.getAddress().isLoopbackAddress()/*address.getAddress().toString().equalsIgnoreCase(ip)*/) {
+                if (address.getBroadcast() != null) {
+                    ipAddress = address.getBroadcast().toString().replace("/", "");
+                    FLog.e(TAG, "broadcast IP: " + ipAddress);
+                }
+            }
+        }
+
+        callback.invoke(ipAddress);
+    }
+
+    private List<InterfaceAddress> getInetAddresses() {
+        List<InterfaceAddress> addresses = new ArrayList<>();
+        try {
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
+                NetworkInterface intf = en.nextElement();
+                for (InterfaceAddress interface_address : intf.getInterfaceAddresses()) {
+                    if (interface_address != null) {
+                        FLog.e(TAG, "interface: " + interface_address.toString());
+                        addresses.add(interface_address);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            FLog.e(TAG, ex.toString());
+        }
+        return addresses;
     }
 
     /**
